@@ -14,11 +14,21 @@ app.use(express.json())
 const apiRoutes = require('./routes/api')
 app.use('/api', apiRoutes)
 
-// Serve the admin UI
-app.use('/admin', express.static(path.join(__dirname, 'admin-ui/dist')))
-app.get(/^\/admin.*/, (req, res) => {
-  res.sendFile(path.join(__dirname, 'admin-ui/dist/index.html'))
-})
+const fs = require('fs')
+
+// Serve the admin UI if built, otherwise provide helpful notice
+const adminDistPath = path.join(__dirname, 'admin-ui/dist')
+const adminIndexPath = path.join(adminDistPath, 'index.html')
+if (fs.existsSync(adminIndexPath)) {
+  app.use('/admin', express.static(adminDistPath))
+  app.get(/^\/admin.*/, (req, res) => {
+    res.sendFile(adminIndexPath)
+  })
+} else {
+  app.get(/^\/admin.*/, (req, res) => {
+    res.send('<h2>Admin UI is not built yet.</h2><p>Please run <code>cd admin-ui && npm install && npm run build</code> to build the admin dashboard.</p>')
+  })
+}
 
 // Serve public static files (the customer facing site)
 app.use(express.static(path.join(__dirname)))
