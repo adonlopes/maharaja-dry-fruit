@@ -1,7 +1,18 @@
 const express = require('express')
 const router = express.Router()
-const { PrismaClient } = require('@prisma/client')
-const prisma = new PrismaClient()
+const { PrismaClient } = require('@prisma/client');
+const { PrismaLibSQL } = require('@prisma/adapter-libsql');
+const { createClient } = require('@libsql/client');
+if (!process.env.TURSO_DATABASE_URL || !process.env.TURSO_AUTH_TOKEN) {
+  throw new Error('Missing Turso database environment variables');
+}
+const libsql = createClient({
+  url: process.env.TURSO_DATABASE_URL,
+  authToken: process.env.TURSO_AUTH_TOKEN,
+});
+const adapter = new PrismaLibSQL(libsql);
+const prisma = new PrismaClient({ adapter });
+
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
 const multer = require('multer')
@@ -56,7 +67,7 @@ router.get('/products', async (req, res) => {
 router.post('/orders', async (req, res) => {
   const { customerName, customerPhone, customerAddress, items, subtotal, discount, deliveryCharges, tax, finalTotal } = req.body
   // items: { productId, quantity }[]
-  
+
   if (!items || items.length === 0) {
     return res.status(400).json({ error: 'Order must contain items' })
   }
@@ -90,7 +101,7 @@ router.post('/orders', async (req, res) => {
         })
       }
 
-        // Create order
+      // Create order
       const order = await tx.order.create({
         data: {
           customerName,
@@ -128,7 +139,7 @@ router.post('/auth/login', async (req, res) => {
   const { email, password } = req.body
   const user = await prisma.user.findUnique({ where: { email } })
   if (!user) return res.status(401).json({ error: 'Invalid email or password.' })
-  
+
   const valid = await bcrypt.compare(password, user.password)
   if (!valid) return res.status(401).json({ error: 'Invalid email or password.' })
 
@@ -139,7 +150,7 @@ router.post('/auth/login', async (req, res) => {
 // Dashboard Stats
 router.get('/admin/dashboard', requireAdmin, async (req, res) => {
   const totalOrders = await prisma.order.count()
-  const totalRevenueData = await prisma.order.aggregate({ 
+  const totalRevenueData = await prisma.order.aggregate({
     _sum: { totalAmount: true },
     where: { status: { notIn: ['Cancelled', 'CANCELLED'] } }
   })
@@ -204,7 +215,7 @@ router.post('/admin/inventory', requireAdmin, upload.single('image'), async (req
 router.put('/admin/inventory/:id', requireAdmin, upload.single('image'), async (req, res) => {
   const { id } = req.params
   const { name, stock, price, oldPrice, isOnOffer, categoryId, isActive } = req.body
-  
+
   const data = {}
   if (name !== undefined) data.name = name
   if (stock !== undefined) data.stock = parseInt(stock)
@@ -213,7 +224,7 @@ router.put('/admin/inventory/:id', requireAdmin, upload.single('image'), async (
   if (isOnOffer !== undefined) data.isOnOffer = isOnOffer === 'true' || isOnOffer === true
   if (categoryId !== undefined) data.categoryId = categoryId
   if (isActive !== undefined) data.isActive = isActive === 'true' || isActive === true
-  
+
   if (req.file) {
     data.imageId = req.file.filename
   }
@@ -243,7 +254,7 @@ router.delete('/admin/inventory/:id', requireAdmin, async (req, res) => {
 // Get orders
 router.get('/admin/orders', requireAdmin, async (req, res) => {
   const orders = await prisma.order.findMany({
-    include: { 
+    include: {
       items: {
         include: { product: true }
       }
@@ -285,14 +296,14 @@ const generateInvoicePDF = async (orderId, res) => {
   doc.fontSize(24).font('Helvetica-Bold').text('Maharaja Nuts & More', { align: 'center' })
   doc.fontSize(10).font('Helvetica').fillColor('gray').text('Health & Happiness in Each Bite', { align: 'center' })
   doc.moveDown(2)
-  
+
   // Invoice details
   doc.fillColor('black').fontSize(16).font('Helvetica-Bold').text('INVOICE', { underline: true })
   doc.fontSize(10).font('Helvetica').text(`Order ID: #${order.id}`)
   doc.text(`Date: ${order.createdAt.toISOString().split('T')[0]}`)
   doc.text(`Status: ${order.status}`)
   doc.moveDown()
-  
+
   // Customer Info
   doc.fontSize(12).font('Helvetica-Bold').text('Billed To:')
   doc.fontSize(10).font('Helvetica')
@@ -300,7 +311,7 @@ const generateInvoicePDF = async (orderId, res) => {
   doc.text(`Phone: ${order.customerPhone || 'N/A'}`)
   doc.text(`Address: ${order.customerAddress || 'N/A'}`)
   doc.moveDown(2)
-  
+
   // Items table header
   const tableTop = 330
   doc.font('Helvetica-Bold')
@@ -309,7 +320,7 @@ const generateInvoicePDF = async (orderId, res) => {
   doc.text('Price (Rs)', 350, tableTop, { width: 80, align: 'right' })
   doc.text('Total (Rs)', 450, tableTop, { width: 80, align: 'right' })
   doc.moveDown(0.5)
-  
+
   doc.moveTo(50, doc.y).lineTo(550, doc.y).stroke()
   doc.moveDown(0.5)
 
@@ -323,15 +334,15 @@ const generateInvoicePDF = async (orderId, res) => {
     doc.text((item.price * item.quantity).toLocaleString('en-IN'), 450, y, { width: 80, align: 'right' })
     y += 20
   })
-  
+
   doc.y = y
   doc.moveDown()
   doc.moveTo(50, doc.y).lineTo(550, doc.y).stroke()
   doc.moveDown(1)
-  
+
   // Total
   doc.fontSize(14).font('Helvetica-Bold').text(`Total Amount: Rs. ${order.totalAmount.toLocaleString('en-IN')}`, 350, doc.y, { align: 'right', width: 180 })
-  
+
   // Footer
   doc.moveDown(4)
   doc.fontSize(10).font('Helvetica').fillColor('gray').text('Thank you for shopping with Maharaja Nuts & More!', { align: 'center' })
