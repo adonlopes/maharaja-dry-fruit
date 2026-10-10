@@ -19,17 +19,24 @@ const multer = require('multer')
 const path = require('path')
 const PDFDocument = require('pdfkit')
 
-// Configure multer for image upload
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, path.join(__dirname, '../images'))
-  },
-  filename: function (req, file, cb) {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9)
-    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname))
+const cloudinary = require('cloudinary').v2
+const { CloudinaryStorage } = require('multer-storage-cloudinary')
+
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
+})
+
+const storage = new CloudinaryStorage({
+  cloudinary,
+  params: {
+    folder: 'maharaja-products',
+    allowed_formats: ['jpg', 'jpeg', 'png', 'webp']
   }
 })
-const upload = multer({ storage: storage })
+
+const upload = multer({ storage })
 
 const JWT_SECRET = process.env.JWT_SECRET || 'super-secret-key-for-dev'
 
@@ -177,7 +184,6 @@ router.get('/admin/inventory', requireAdmin, async (req, res) => {
 // Create new product
 router.post('/admin/inventory', requireAdmin, upload.single('image'), async (req, res) => {
   const { id, name, price, oldPrice, isOnOffer, categoryId, stock, isActive } = req.body
-  const imageId = req.file ? req.file.filename.replace(path.extname(req.file.filename), '') : null
 
   try {
     const product = await prisma.product.create({
@@ -190,33 +196,24 @@ router.post('/admin/inventory', requireAdmin, upload.single('image'), async (req
         categoryId,
         stock: stock ? parseInt(stock) : 100,
         isActive: isActive === 'true' || isActive === true,
-        imageId: req.file ? req.file.filename : null // Keep extension so it's easier to serve if needed, wait index.html appends .jpg
-      }
+        imageId: req.file ? req.file.path : null
+      },
+      include: { category: true }
     })
-    // NOTE: For index.html, it appends .jpg to imageId. If we uploaded a .png, we might have issues.
-    // For simplicity, we just store the basename if we want index.html to append .jpg, OR we store the whole filename
-    // Actually, I'll store the filename without extension if it's .jpg, or just store the filename and let index.html handle it.
-    // Let's store req.file.filename in imageId. But wait, index.html does `<img src="images/${item.img}.jpg">`
-    // I will adjust index.html later to not append .jpg if item.img already has an extension.
-    if (req.file) {
-      await prisma.product.update({
-        where: { id: product.id },
-        data: { imageId: req.file.filename }
-      })
-    }
 
     res.json(product)
   } catch (err) {
+    console.error('Create product error:', err)
     res.status(400).json({ error: err.message })
   }
 })
 
-// Update product stock/details
 router.put('/admin/inventory/:id', requireAdmin, upload.single('image'), async (req, res) => {
   const { id } = req.params
   const { name, stock, price, oldPrice, isOnOffer, categoryId, isActive } = req.body
 
   const data = {}
+
   if (name !== undefined) data.name = name
   if (stock !== undefined) data.stock = parseInt(stock)
   if (price !== undefined) data.price = parseFloat(price)
@@ -226,16 +223,19 @@ router.put('/admin/inventory/:id', requireAdmin, upload.single('image'), async (
   if (isActive !== undefined) data.isActive = isActive === 'true' || isActive === true
 
   if (req.file) {
-    data.imageId = req.file.filename
+    data.imageId = req.file.path
   }
 
   try {
     const product = await prisma.product.update({
       where: { id },
-      data
+      data,
+      include: { category: true }
     })
+
     res.json(product)
   } catch (err) {
+    console.error('Update product error:', err)
     res.status(400).json({ error: err.message })
   }
 })

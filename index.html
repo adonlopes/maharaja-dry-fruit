@@ -1106,9 +1106,14 @@
             card.style.opacity = '0.5';
             card.style.filter = 'grayscale(100%)';
           }
-          const isImageWithExtension = item.img && item.img.includes('.');
-          const iconInner = item.img
-            ? `<img src="images/${item.img}${isImageWithExtension ? '' : '.jpg'}" alt="${item.n}" loading="lazy" onerror="this.parentElement.innerHTML='${cat.emoji}';this.parentElement.style.fontSize='2.4rem';">`
+          const imageSrc = item.img
+            ? (item.img.startsWith('https://') || item.img.startsWith('http://')
+              ? item.img
+              : `/images/${item.img}${item.img.includes('.') ? '' : '.jpg'}`)
+            : null;
+
+          const iconInner = imageSrc
+            ? `<img src="${imageSrc}" alt="${item.n}" loading="lazy" onerror="this.parentElement.innerHTML='${cat.emoji}';this.parentElement.style.fontSize='2.4rem';">`
             : cat.emoji;
 
           let badgeHtml = '';
