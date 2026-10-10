@@ -31,7 +31,15 @@ if (fs.existsSync(adminIndexPath)) {
 }
 
 // Serve public static files (the customer facing site)
+
+// Serve the customer storefront homepage
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'index.html'))
+})
+
+// Serve storefront assets and images
 app.use(express.static(path.join(__dirname)))
+
 
 // Start server
 app.listen(PORT, () => {
