@@ -208,37 +208,84 @@ router.post('/admin/inventory', requireAdmin, upload.single('image'), async (req
   }
 })
 
-router.put('/admin/inventory/:id', requireAdmin, upload.single('image'), async (req, res) => {
-  const { id } = req.params
-  const { name, stock, price, oldPrice, isOnOffer, categoryId, isActive } = req.body
 
-  const data = {}
+router.put(
+  '/admin/inventory/:id',
+  requireAdmin,
+  (req, res, next) => {
+    upload.single('image')(req, res, (err) => {
+      if (err) {
+        console.error('Product image upload error:', {
+          message: err.message,
+          name: err.name,
+          stack: err.stack
+        })
 
-  if (name !== undefined) data.name = name
-  if (stock !== undefined) data.stock = parseInt(stock)
-  if (price !== undefined) data.price = parseFloat(price)
-  if (oldPrice !== undefined) data.oldPrice = oldPrice ? parseFloat(oldPrice) : null
-  if (isOnOffer !== undefined) data.isOnOffer = isOnOffer === 'true' || isOnOffer === true
-  if (categoryId !== undefined) data.categoryId = categoryId
-  if (isActive !== undefined) data.isActive = isActive === 'true' || isActive === true
+        return res.status(400).json({
+          error: 'Product image upload failed',
+          details: err.message
+        })
+      }
 
-  if (req.file) {
-    data.imageId = req.file.path
-  }
-
-  try {
-    const product = await prisma.product.update({
-      where: { id },
-      data,
-      include: { category: true }
+      next()
     })
+  },
+  async (req, res) => {
+    const { id } = req.params
+    const {
+      name,
+      stock,
+      price,
+      oldPrice,
+      isOnOffer,
+      categoryId,
+      isActive
+    } = req.body
 
-    res.json(product)
-  } catch (err) {
-    console.error('Update product error:', err)
-    res.status(400).json({ error: err.message })
+    const data = {}
+
+    if (name !== undefined) data.name = name
+    if (stock !== undefined) data.stock = parseInt(stock, 10)
+    if (price !== undefined) data.price = parseFloat(price)
+    if (oldPrice !== undefined) {
+      data.oldPrice = oldPrice ? parseFloat(oldPrice) : null
+    }
+    if (isOnOffer !== undefined) {
+      data.isOnOffer = isOnOffer === 'true' || isOnOffer === true
+    }
+    if (categoryId !== undefined) data.categoryId = categoryId
+    if (isActive !== undefined) {
+      data.isActive = isActive === 'true' || isActive === true
+    }
+
+    if (req.file) {
+      data.imageId = req.file.path
+    }
+
+    try {
+      const product = await prisma.product.update({
+        where: { id },
+        data,
+        include: { category: true }
+      })
+
+      return res.json(product)
+    } catch (err) {
+      console.error('Update product database error:', {
+        message: err.message,
+        name: err.name,
+        code: err.code,
+        stack: err.stack
+      })
+
+      return res.status(500).json({
+        error: 'Failed to update product',
+        details: err.message,
+        code: err.code || null
+      })
+    }
   }
-})
+)
 
 // Delete product
 router.delete('/admin/inventory/:id', requireAdmin, async (req, res) => {
