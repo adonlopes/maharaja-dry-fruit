@@ -37,6 +37,7 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'))
 })
 
+app.use('/images', express.static(path.join(__dirname, 'images')))
 // Serve storefront assets and images
 app.use(express.static(path.join(__dirname)))
 
