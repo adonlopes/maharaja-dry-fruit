@@ -70,3 +70,39 @@ app.use((err, req, res, next) => {
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`)
 })
+
+
+const util = require('util')
+
+// Temporary: reveal the actual unhandled error
+process.on('unhandledRejection', (reason) => {
+  console.error(
+    'UNHANDLED REJECTION DETAILS:',
+    util.inspect(reason, {
+      depth: 10,
+      colors: false
+    })
+  )
+})
+
+// Log errors passed to Express middleware
+app.use((err, req, res, next) => {
+  console.error(
+    'EXPRESS ERROR DETAILS:',
+    util.inspect({
+      path: req.originalUrl,
+      method: req.method,
+      error: err
+    }, {
+      depth: 10,
+      colors: false
+    })
+  )
+
+  if (res.headersSent) return next(err)
+
+  return res.status(500).json({
+    error: 'Internal server error',
+    details: err.message || String(err)
+  })
+})
