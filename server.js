@@ -37,10 +37,34 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'))
 })
 
+// Serve product images explicitly
 app.use('/images', express.static(path.join(__dirname, 'images')))
-// Serve storefront assets and images
+
+
 app.use(express.static(path.join(__dirname)))
 
+// Temporary error logger for debugging
+const util = require('util')
+
+app.use((err, req, res, next) => {
+  console.error(
+    'GLOBAL EXPRESS ERROR:',
+    util.inspect({
+      path: req.originalUrl,
+      method: req.method,
+      error: err
+    }, { depth: 8, colors: false })
+  )
+
+  if (res.headersSent) {
+    return next(err)
+  }
+
+  return res.status(err.status || err.statusCode || 500).json({
+    error: 'Internal server error',
+    message: 'Check Vercel Runtime Logs for GLOBAL EXPRESS ERROR'
+  })
+})
 
 // Start server
 app.listen(PORT, () => {
