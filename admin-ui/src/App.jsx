@@ -135,6 +135,7 @@ const Login = ({ login }) => {
 // LAYOUT — sidebar
 // ============================================================
 
+
 const Layout = ({ logout, children }) => {
   const location = useLocation()
 
@@ -145,18 +146,20 @@ const Layout = ({ logout, children }) => {
   ]
 
   return (
-    <div className="flex h-screen bg-[#fbfbfb]">
-      <aside className="w-64 bg-white border-r border-gray-200 flex flex-col">
-        <div className="p-5 border-b border-gray-200">
-          <h1 className="font-semibold text-lg text-gray-900">Maharaja Admin</h1>
+    <div className="flex min-h-screen flex-col bg-[#fbfbfb] md:h-screen md:flex-row">
+      <aside className="flex w-full shrink-0 flex-col border-b border-gray-200 bg-white md:w-64 md:border-b-0 md:border-r">
+        <div className="border-b border-gray-200 px-4 py-3 md:p-5">
+          <h1 className="text-base font-semibold text-gray-900 md:text-lg">
+            Maharaja Admin
+          </h1>
         </div>
 
-        <nav className="flex-1 p-4 space-y-1">
-          {links.map(l => (
+        <nav className="flex flex-row gap-1 overflow-x-auto p-2 md:flex-1 md:flex-col md:gap-1 md:overflow-visible md:p-4">
+          {links.map((l) => (
             <Link
               key={l.path}
               to={l.path}
-              className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors ${location.pathname === l.path
+              className={`flex flex-none items-center gap-2 whitespace-nowrap rounded-md px-3 py-2 text-sm font-medium transition-colors ${location.pathname === l.path
                 ? 'bg-gray-100 text-gray-900'
                 : 'text-gray-600 hover:bg-gray-50'
                 }`}
@@ -167,22 +170,24 @@ const Layout = ({ logout, children }) => {
           ))}
         </nav>
 
-        <div className="p-4 border-t border-gray-200">
+        <div className="flex justify-end border-t border-gray-200 p-2 md:block md:p-4">
           <button
             onClick={logout}
-            className="flex items-center gap-3 text-sm font-medium text-red-600 w-full px-3 py-2 hover:bg-red-50 rounded-md transition-colors"
+            className="flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 md:w-full"
           >
-            <LogOut size={18} /> Logout
+            <LogOut size={18} />
+            Logout
           </button>
         </div>
       </aside>
 
-      <main className="flex-1 overflow-auto p-8">
+      <main className="min-w-0 flex-1 overflow-auto p-3 md:p-8">
         {children}
       </main>
     </div>
   )
 }
+
 
 const Dashboard = () => {
   const [stats, setStats] = useState({ totalOrders: 0, totalRevenue: 0, outOfStockProducts: 0, pendingOrders: 0 })
@@ -220,7 +225,7 @@ const Dashboard = () => {
     <div className="max-w-6xl mx-auto">
       <h1 className="text-2xl font-semibold mb-6 text-gray-900">Dashboard</h1>
 
-      <div className="grid grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-2 gap-3 mb-8 md:grid-cols-4 md:gap-6">
         <div className="bg-white p-5 rounded-lg border border-gray-200 shadow-sm">
           <p className="text-gray-500 text-xs font-medium uppercase tracking-wider mb-1">Total Revenue</p>
           <p className="text-2xl font-semibold text-gray-900">₹{stats.totalRevenue.toLocaleString('en-IN')}</p>
@@ -239,8 +244,8 @@ const Dashboard = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-6 mb-6">
-        <div className="col-span-2 bg-white border border-gray-200 rounded-lg shadow-sm p-5">
+      <div className="grid grid-cols-1 gap-3 items-end sm:grid-cols-3 sm:gap-4">
+        <div className="md:col-span-2 bg-white border border-gray-200 rounded-lg shadow-sm p-3 md:p-5">
           <h2 className="text-lg font-medium text-gray-900 mb-6">Revenue Overview</h2>
           <div className="h-72">
             <ResponsiveContainer width="100%" height="100%">
@@ -511,7 +516,7 @@ const Inventory = () => {
     <div className="flex flex-col h-full max-w-6xl mx-auto">
 
       {/* ── Page Header ── */}
-      <div className="flex justify-between items-start mb-5">
+      <div className="flex flex-col gap-3 mb-5 sm:flex-row sm:justify-between sm:items-start">
         <div>
           <h1 className="text-2xl font-semibold text-gray-900">Inventory Management</h1>
           <p className="text-sm text-gray-500 mt-1">Manage your products, stock levels and inventory</p>
@@ -522,7 +527,7 @@ const Inventory = () => {
       </div>
 
       {/* ── KPI Summary Cards ── */}
-      <div className="grid grid-cols-5 gap-4 mb-5">
+      <div className="grid grid-cols-2 gap-3 mb-5 md:grid-cols-5 md:gap-4">
         <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
           <p className="text-2xl font-semibold text-gray-900">{kpis.total}</p>
           <p className="text-xs text-gray-500 mt-0.5">All active products</p>
@@ -561,7 +566,7 @@ const Inventory = () => {
       </div>
 
       {/* ── Search + Filters ── */}
-      <div className="flex gap-3 mb-4 items-center flex-wrap">
+      <div className="flex flex-col gap-3 mb-4 items-stretch flex-wrap sm:flex-row sm:items-center">
         <div className="relative flex-1 min-w-[200px]">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
@@ -609,7 +614,7 @@ const Inventory = () => {
       {/* ── Product Table (preserved) ── */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden flex-1 flex flex-col">
         <div className="overflow-auto flex-1">
-          <table className="w-full text-left text-sm">
+          <table className="w-full min-w-[640px] text-left text-sm">
             <thead className="bg-gray-50 border-b border-gray-200 sticky top-0 z-10">
               <tr>
                 <th className="p-4 font-medium text-gray-500 uppercase tracking-wider text-xs">Image</th>

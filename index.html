@@ -916,6 +916,136 @@
         display: none;
       }
     }
+
+    /* MOBILE-ONLY storefront improvements */
+    @media (max-width: 520px) {
+
+      /* Bring products into view sooner */
+      .hero {
+        padding: 24px 12px 20px;
+      }
+
+      .hero-badge-wrap {
+        display: none;
+      }
+
+      .hero h2 {
+        font-size: 2rem;
+        line-height: 1.08;
+      }
+
+      .hero p.lede {
+        font-size: 0.94rem;
+        line-height: 1.45;
+        margin-top: 12px;
+      }
+
+      .hero-actions {
+        gap: 8px;
+        margin-top: 18px;
+      }
+
+      .stat {
+        padding: 12px 8px;
+      }
+
+      /* Compact product sections */
+      .catalog {
+        padding: 22px 10px 80px;
+      }
+
+      .cat-section {
+        margin-bottom: 28px;
+      }
+
+      .cat-heading {
+        gap: 8px;
+        align-items: center;
+        margin-bottom: 12px;
+      }
+
+      .cat-heading .em {
+        font-size: 1.25rem;
+      }
+
+      .cat-heading h3 {
+        font-size: 1.05rem;
+        line-height: 1.2;
+      }
+
+      .cat-heading .count {
+        font-size: 0.62rem;
+        padding: 3px 6px;
+        white-space: nowrap;
+      }
+
+      /* Two products side by side */
+      .grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+      }
+
+      .card {
+        min-width: 0;
+        padding: 8px;
+        gap: 7px;
+        border-radius: 12px;
+      }
+
+      .card-icon {
+        aspect-ratio: 1.5 / 1;
+        border-radius: 8px;
+      }
+
+      .card-name {
+        font-size: 0.82rem;
+        line-height: 1.25;
+        min-height: 2.5em;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        overflow-wrap: anywhere;
+      }
+
+      .card-foot {
+        gap: 4px;
+        flex-wrap: wrap;
+      }
+
+      .card-price {
+        font-size: 0.86rem;
+      }
+
+      .old-price {
+        font-size: 0.68rem;
+      }
+
+      .add-btn {
+        padding: 7px 8px;
+        font-size: 0.72rem;
+        gap: 3px;
+        border-radius: 8px;
+        white-space: nowrap;
+      }
+
+      .qty-stepper button {
+        width: 22px;
+        height: 28px;
+      }
+
+      .qty-stepper .qn {
+        min-width: 17px;
+        font-size: 0.75rem;
+      }
+
+      .discount-badge {
+        top: 6px;
+        right: 6px;
+        padding: 3px 5px;
+        font-size: 0.62rem;
+      }
+    }
   </style>
 </head>
 
